@@ -6,47 +6,69 @@ module rv32i_cpu(
 
     output rv32i_types_pkg::XLEN_t imem_addr,
     output rv32i_types_pkg::XLEN_t dmem_addr,
+    output rv32i_types_pkg::XLEN_t dmem_wdata,
     output logic dmem_we
 );
     import rv32i_types_pkg::*;
-    // Program Counter //
-    logic is_jal, is_jalr;
-    XLEN_t jal_target, jalr_target, branch_target;
-    logic branch_taken;
-    assign branch_target = pc + imm;
 
+    // ==========================================
+    // Signal Declarations
+    // ==========================================
+    // Program Counter
     XLEN_t pc, pc_next, pc_plus4;
+
+    // Control / branch / jump
+    logic is_jal, is_jalr;
+    logic branch_taken;
+    logic reg_write;
+    logic mem_read;
+    logic mem_write;
+    logic is_branch;
+    logic alu_src_imm;
+    logic invalid_inst;
+
+    // Decoder / immediate / ALU control
+    imm_t imm_sel;
+    aluop_t alu_op;
+
+    // Datapath
+    XLEN_t instruction;
+    XLEN_t imm;
+    XLEN_t alu_a, alu_b, alu_y;
+    logic alu_zero;
+    XLEN_t rs1_data, rs2_data;
+    XLEN_t wb_data;
+
+    // Address / target
+    XLEN_t jal_target, jalr_target, branch_target;
+    logic [4:0] rs1_addr, rs2_addr, rd_addr;
+
+    // Instruction union view
+    inst_t inst_u;
+
+    // ==========================================
+    // Logic Implementation
+    // ==========================================
+
+    // Program Counter //
+
     always_comb begin : NextProgramCounter
         pc_plus4 = pc + 'd4;
-        pc_next = is_jal ? jal_target :
+        pc_next = branch_taken ? branch_target :
+                  is_jal ? jal_target :
                   is_jalr ? jalr_target :
-                  branch_taken ? branch_target :
                   pc_plus4;
     end
 
-    always_ff @(posedge clk) begin : ProgramCounter
+    always_ff @ (posedge clk) begin : ProgramCounter
         pc <= reset ? 'b0 : pc_next;
     end
 
     assign imem_addr = pc;
     // Instruction Fetch //
-    XLEN_t instruction;
     assign instruction = imem_rdata;
 
     // Instruction Decode //
-    // inst_decoder.sv
-    //XLEN_t inst;
-    imm_t imm_sel;
-    aluop_t alu_op;
-    logic reg_write;
-    logic mem_read;
-    logic mem_write;
-    logic is_branch;
-    // logic is_jal;
-    // logic is_jalr;
-    logic alu_src_imm;
-    logic invalid_inst;
-
     inst_decoder inst_decoder1(
         .inst(instruction),
         .imm_sel(imm_sel),
@@ -60,22 +82,15 @@ module rv32i_cpu(
         .alu_src_imm(alu_src_imm),
         .invalid_inst(invalid_inst)
     );
-    // imm_gen.sv
-    //XLEN_t inst;
-    //imm_t imm_sel;
-    XLEN_t imm;
 
+    // imm_gen.sv
     imm_gen imm_gen1(
         .inst(instruction),
         .imm_sel(imm_sel),
         .imm(imm)
     );
+
     // alu.sv
-    //aluop_t alu_op;
-    XLEN_t alu_a, alu_b, alu_y;
-    logic alu_zero;
-    XLEN_t rs1_data, rs2_data;
-    
     assign alu_a = rs1_data;
     assign alu_b = alu_src_imm ? imm : rs2_data;
 
@@ -89,20 +104,19 @@ module rv32i_cpu(
     );
 
     // regfile.sv
-    inst_t inst_u; // instruction union
-    XLEN_t wb_data;
-    logic [4:0] rs1_addr, rs2_addr, rd_addr;
-
-    assign wb_data = (is_jal || is_jalr) ? pc_plus4 : (mem_read ? dmem_rdata : alu_y);
     assign inst_u.RAW = instruction;
+    
     assign rs1_addr = inst_u.Rtype.rs1;
     assign rs2_addr = inst_u.Rtype.rs2;
+
     assign rd_addr = inst_u.Rtype.rd;
+    assign wb_data = (is_jal || is_jalr) ? pc_plus4 :
+                     (mem_read ? dmem_rdata : alu_y);
 
     regfile regfile1(
         .clk(clk),
         .rst(reset),
-        .write_en(reg_write & ~invalid_inst),
+        .write_en(reg_write && ~invalid_inst),
         .write_addr(rd_addr),
         .write_data(wb_data),
         .read1_addr(rs1_addr),
@@ -111,12 +125,8 @@ module rv32i_cpu(
         .read2_data(rs2_data)
     );
 
-    assign jal_target = pc + imm;
-    assign jalr_target = (rs1_data + imm) & ~XLEN'(1'b1); 
-
     // branch_unit.sv
     // logic branch_taken;
-
     branch_unit branch_unit1(
         .is_branch(is_branch),
         .funct3(inst_u.Btype.funct3),
@@ -124,8 +134,12 @@ module rv32i_cpu(
         .rs2(rs2_data),
         .take_branch(branch_taken)
     );
+    assign branch_target = pc + imm;
+    assign jal_target = pc + imm; 
+    assign jalr_target = (rs1_data + imm) & ~XLEN_t'(1'b1);
 
-    // TODO
+    // write back
+    assign dmem_wdata = rs2_data;
     assign dmem_addr = alu_y;
     assign dmem_we = mem_write & ~invalid_inst;
 endmodule

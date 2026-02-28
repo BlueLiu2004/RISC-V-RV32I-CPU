@@ -1,11 +1,10 @@
 package rv32i_types_pkg;
 
-    localparam XLEN = 32;
-    typedef logic [XLEN - 1:0] XLEN_t;
+    typedef logic [32 - 1:0] XLEN_t;
     typedef logic [2:0] imm_t;
     typedef logic [6:0] opcode_t;
     typedef logic [3:0] aluop_t;
-
+ 
 
     typedef enum imm_t {
         IMM_I = 'd0,
@@ -78,17 +77,17 @@ package rv32i_types_pkg;
     } inst_t;
 
     typedef enum opcode_t {
-        OP_IMM = 'b0010011,
-        LUI = 'b0110111,
-        AUIPC = 'b0010111,
-        OP = 'b0110011,
-        JAL = 'b1101111,
-        JALR = 'b1100111,
-        BRANCH = 'b1100011,
-        LOAD = 'b0000011,
-        STORE = 'b0100011,
-        MISC_MEM = 'b0001111,
-        SYSTEM = 'b1110011
+        OP_IMM = 7'b0010011,
+        LUI = 7'b0110111,
+        AUIPC = 7'b0010111,
+        OP = 7'b0110011,
+        JAL = 7'b1101111,
+        JALR = 7'b1100111,
+        BRANCH = 7'b1100011,
+        LOAD = 7'b0000011,
+        STORE = 7'b0100011,
+        MISC_MEM = 7'b0001111,
+        SYSTEM = 7'b1110011
     } opcode_enum;
 
     typedef enum aluop_t {
@@ -105,11 +104,11 @@ package rv32i_types_pkg;
     } aluop_enum;
 
     typedef enum logic [2:0] {
-        BEQ = 'b000,
-        BNE = 'b001,
-        BLT = 'b100,
-        BGE = 'b101,
-        BLTU = 'b110,
-        BGEU = 'b111
+        BEQ = 3'b000,
+        BNE = 3'b001,
+        BLT = 3'b100,
+        BGE = 3'b101,
+        BLTU = 3'b110,
+        BGEU = 3'b111
     } branch_t; // their opcode at Page 554.
 endpackage

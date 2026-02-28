@@ -14,7 +14,7 @@ module regfile(
 
     always_ff @ (posedge clk) begin
         if(rst) begin
-            for (int i = 1; i <= 31; i++) begin
+            for (int i = 0; i <= 31; i++) begin
                 GPR[i] <= '0;
             end
         end else begin
