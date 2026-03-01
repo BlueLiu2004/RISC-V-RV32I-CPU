@@ -1,3 +1,5 @@
 /soc.*/*
 /assembler/imem.svinc
 /assembler/program.s
+/assembler/imem.svinc
+/assembler/program.s

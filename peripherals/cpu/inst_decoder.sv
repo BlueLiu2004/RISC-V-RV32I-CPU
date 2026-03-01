@@ -1,5 +1,7 @@
 module inst_decoder(
-    input  rv32i_types_pkg::XLEN_t inst,
+    input  rv32i_types_pkg::opcode_t opcode,
+    input  logic [2:0] funct3,
+    input  logic [6:0] funct7,
     output rv32i_types_pkg::imm_t imm_sel,
     output rv32i_types_pkg::aluop_t alu_op,
     output logic reg_write,
@@ -12,18 +14,6 @@ module inst_decoder(
     output logic invalid_inst
 );
     import rv32i_types_pkg::*;
-    inst_t instruction;
-    assign instruction = inst;
-
-    opcode_t opcode;
-    assign opcode = instruction.Rtype.opcode;
-
-    logic [2:0] funct3;
-    assign funct3 = instruction.Rtype.funct3;
-
-    logic [6:0] funct7;
-    assign funct7 = instruction.Rtype.funct7;
-
     logic invalid_opcode, invalid_funct;
 
     always_comb begin : opcode_imm_type_decoder

@@ -1,6 +1,6 @@
 module rv32i_cpu(
     input logic clk,
-    input logic reset,
+    input logic reset_n,
     input rv32i_types_pkg::XLEN_t imem_rdata, // instruction fetch from ROM
     input rv32i_types_pkg::XLEN_t dmem_rdata, // data fetch from memory
 
@@ -61,16 +61,19 @@ module rv32i_cpu(
     end
 
     always_ff @ (posedge clk) begin : ProgramCounter
-        pc <= reset ? 'b0 : pc_next;
+        pc <= ~reset_n ? 'b0 : pc_next;
     end
 
     assign imem_addr = pc;
     // Instruction Fetch //
     assign instruction = imem_rdata;
+    assign inst_u.RAW = instruction;
 
     // Instruction Decode //
     inst_decoder inst_decoder1(
-        .inst(instruction),
+        .opcode(inst_u.Rtype.opcode),
+        .funct3(inst_u.Rtype.funct3),
+        .funct7(inst_u.Rtype.funct7),
         .imm_sel(imm_sel),
         .alu_op(alu_op),
         .reg_write(reg_write),
@@ -85,7 +88,7 @@ module rv32i_cpu(
 
     // imm_gen.sv
     imm_gen imm_gen1(
-        .inst(instruction),
+        .inst(instruction[31:7]),
         .imm_sel(imm_sel),
         .imm(imm)
     );
@@ -104,7 +107,6 @@ module rv32i_cpu(
     );
 
     // regfile.sv
-    assign inst_u.RAW = instruction;
     
     assign rs1_addr = inst_u.Rtype.rs1;
     assign rs2_addr = inst_u.Rtype.rs2;
@@ -115,7 +117,7 @@ module rv32i_cpu(
 
     regfile regfile1(
         .clk(clk),
-        .rst(reset),
+        .reset_n(reset_n),
         .write_en(reg_write && ~invalid_inst),
         .write_addr(rd_addr),
         .write_data(wb_data),

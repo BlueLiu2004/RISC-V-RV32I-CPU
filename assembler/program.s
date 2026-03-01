@@ -18,12 +18,20 @@ sw   x11, 4(x0)
 sw   x12, 8(x0)
 sw   x13, 12(x0)
 
-# simple delay for visible refresh
-addi x14, x0, 2000
-delay_loop:
+# two-level delay for human-visible countdown
+# x14: outer loop, x15: inner loop
+addi x14, x0, 600
+delay_outer:
+addi x15, x0, 2000
+delay_inner:
+addi x15, x15, -1
+beq  x15, x0, delay_outer_dec
+jal  x0, delay_inner
+
+delay_outer_dec:
 addi x14, x14, -1
 beq  x14, x0, dec_step
-jal  x0, delay_loop
+jal  x0, delay_outer
 
 dec_step:
 beq  x10, x0, borrow1

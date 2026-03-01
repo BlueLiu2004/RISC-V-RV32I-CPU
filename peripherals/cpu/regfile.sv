@@ -1,6 +1,6 @@
 module regfile(
     input  logic clk,
-    input  logic rst,
+    input  logic reset_n,
     input  logic write_en,
     input  logic [4:0]  write_addr,
     input  rv32i_types_pkg::XLEN_t write_data,
@@ -10,10 +10,9 @@ module regfile(
     output rv32i_types_pkg::XLEN_t read2_data
 );
     rv32i_types_pkg::XLEN_t GPR [31:0];
-    integer reg_rst_i;
 
     always_ff @ (posedge clk) begin
-        if(rst) begin
+        if(!reset_n) begin
             for (int i = 0; i <= 31; i++) begin
                 GPR[i] <= '0;
             end
@@ -23,7 +22,7 @@ module regfile(
             end
         end
     end
-
-    assign read1_data = (read1_addr == '0) ? '0 : ((write_en && (read1_addr == write_addr)) ? write_data : GPR[read1_addr]);
-    assign read2_data = (read2_addr == '0) ? '0 : ((write_en && (read2_addr == write_addr)) ? write_data : GPR[read2_addr]);
+    // forwarding will cause timing violation
+    assign read1_data = (read1_addr == '0) ? '0 : GPR[read1_addr];
+    assign read2_data = (read2_addr == '0) ? '0 : GPR[read2_addr];
 endmodule

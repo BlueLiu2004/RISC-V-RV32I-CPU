@@ -1,10 +1,11 @@
 module imm_gen(
-input rv32i_types_pkg::XLEN_t inst,
-input rv32i_types_pkg::imm_t imm_sel,
-output rv32i_types_pkg::XLEN_t imm);
+    input logic [31:7] inst,
+    input rv32i_types_pkg::imm_t imm_sel,
+    output rv32i_types_pkg::XLEN_t imm
+);
     import rv32i_types_pkg::*;
     inst_t instruction;
-    assign instruction.RAW = inst;
+    assign instruction.RAW = {inst, 7'b0};
 
     always_comb begin : combine_immediate
         imm = 'd0;
