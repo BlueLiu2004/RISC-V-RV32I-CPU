@@ -6,7 +6,7 @@ module four_digits_eight_segments(
     output logic [7:0] segments, //a,b,c,d,e,f,g,dot
     output logic [3:0] digit_ena
 );
-    localparam int unsigned CLK_HZ = FPGAinfo::CLK_HZ;
+    import SYSinfo::*;
     localparam int unsigned SCAN_HZ = 120;
     localparam int unsigned SCAN_DIV = CLK_HZ / (SCAN_HZ * 4) - 1;
 
