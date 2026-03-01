@@ -1,1 +1,3 @@
-/riscv_rv32i.*/*
+/soc.*/*
+/assembler/imem.svinc
+/assembler/program.s
